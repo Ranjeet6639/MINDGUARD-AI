@@ -198,7 +198,7 @@ function App() {
 
         {result && <div className={`result ${level}`}>{result}</div>}
 
-        <button className="logout" onClick={() => signOut(auth)}>
+        <button className="logout" onClick={() => signOut(auth)} style={{ marginTop: "20px" }}>
           Logout
         </button>
       </div>
