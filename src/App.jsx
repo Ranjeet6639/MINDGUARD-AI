@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { collection, addDoc } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import {
   getAuth,
   onAuthStateChanged,
@@ -10,7 +17,7 @@ import {
 import { db } from "./firebase";
 import "./App.css";
 
-// 📊 Chart imports
+// 📊 Chart
 import {
   Chart as ChartJS,
   LineElement,
@@ -22,7 +29,6 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 
-// Register chart components
 ChartJS.register(
   LineElement,
   PointElement,
@@ -35,260 +41,278 @@ ChartJS.register(
 const auth = getAuth();
 
 function App() {
-  // 🔐 Auth states
+  // 🔐 Auth
   const [user, setUser] = useState(null);
-  const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isRegister, setIsRegister] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [authError, setAuthError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  // 🧠 Stress states
+  // 🧠 Stress
   const [sleep, setSleep] = useState("");
   const [workload, setWorkload] = useState("");
   const [mood, setMood] = useState("");
   const [result, setResult] = useState("");
   const [level, setLevel] = useState("");
 
-  // 📈 Graph state
+  // 📈 Graph
   const [graphData, setGraphData] = useState([]);
+
+  // 🔥 Streak
+  const [streak, setStreak] = useState(0);
+
+  // 🤖 AI
+  const [aiAdvice, setAiAdvice] = useState("");
+  const [showAlert, setShowAlert] = useState(false);
 
   // 🔁 Auth listener
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsub();
+    return onAuthStateChanged(auth, setUser);
   }, []);
 
-  // 🔐 Login / Register
+  // 🔥 Fetch streak
+  useEffect(() => {
+    if (!user) return;
+    const fetchStreak = async () => {
+      const ref = doc(db, "userStreaks", user.uid);
+      const snap = await getDoc(ref);
+      if (snap.exists()) setStreak(snap.data().currentStreak);
+    };
+    fetchStreak();
+  }, [user]);
+
+  // 🔐 Login/Register
   const handleAuth = async () => {
-    setAuthError("");
-
-    if (!email || !password || (isRegister && !confirmPassword)) {
-      setAuthError("All fields are required");
-      return;
-    }
-
-    if (password.length < 6) {
-      setAuthError("Password must be at least 6 characters");
-      return;
-    }
-
-    if (isRegister && password !== confirmPassword) {
-      setAuthError("Passwords do not match");
-      return;
-    }
-
     try {
-      setLoading(true);
       if (isRegister) {
+        if (password !== confirmPassword) throw new Error("Passwords mismatch");
         await createUserWithEmailAndPassword(auth, email, password);
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
-    } catch (err) {
-      setAuthError(err.message);
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      setAuthError(e.message);
     }
   };
 
-  // 🧪 Stress analysis
+  // 🔥 Update streak
+  const updateStreak = async () => {
+    const today = new Date().toISOString().split("T")[0];
+    const ref = doc(db, "userStreaks", user.uid);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      await setDoc(ref, {
+        currentStreak: 1,
+        longestStreak: 1,
+        lastCheckInDate: today,
+      });
+      setStreak(1);
+      return;
+    }
+
+    const data = snap.data();
+    if (data.lastCheckInDate === today) return;
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const y = yesterday.toISOString().split("T")[0];
+
+    const newStreak = data.lastCheckInDate === y ? data.currentStreak + 1 : 1;
+
+    await updateDoc(ref, {
+      currentStreak: newStreak,
+      longestStreak: Math.max(newStreak, data.longestStreak),
+      lastCheckInDate: today,
+    });
+
+    setStreak(newStreak);
+  };
+
+  // 🧪 Analyze Stress + AI
   const analyzeStress = async () => {
-    if (!sleep || !workload || !mood) {
-      alert("Please fill all fields");
-      return;
-    }
+    const s = +sleep,
+      w = +workload,
+      m = +mood;
 
-    const s = Number(sleep);
-    const w = Number(workload);
-    const m = Number(mood);
-
-    if (s <= 0 || w <= 0 || m <= 0 || w > 10 || m > 10) {
-      alert("Enter valid values");
-      return;
-    }
-
-    let stress = "";
-    let stressLevel = "";
-    let stressValue = 0;
+    let stress = "",
+      lvl = "",
+      value = 0,
+      advice = "";
 
     if (s < 5 && w > 7 && m < 4) {
       stress = "😡 High Stress";
-      stressLevel = "high";
-      stressValue = 9;
+      lvl = "high";
+      value = 9;
+      advice = `
+🚨 High stress detected.
+
+• Reduce workload immediately
+• Avoid isolation
+• Practice guided breathing
+• Talk to someone you trust
+
+⚕️ If this continues, consult:
+• Psychologist
+• Psychiatrist
+• Primary care doctor
+`;
+      setShowAlert(true);
     } else if (s < 6 || w > 6) {
       stress = "😟 Medium Stress";
-      stressLevel = "medium";
-      stressValue = 6;
+      lvl = "medium";
+      value = 6;
+      advice = `
+⚠️ Moderate stress.
+
+• Improve sleep routine
+• Take regular breaks
+• Light exercise / meditation
+• Consider a counselor if persistent
+`;
+      setShowAlert(false);
     } else {
       stress = "😊 Low Stress";
-      stressLevel = "low";
-      stressValue = 3;
+      lvl = "low";
+      value = 3;
+      advice = `
+✅ You’re doing well.
+
+• Maintain healthy routines
+• Stay consistent
+• Keep tracking daily 🌱
+`;
+      setShowAlert(false);
     }
 
     setResult(stress);
-    setLevel(stressLevel);
+    setLevel(lvl);
+    setAiAdvice(advice);
 
-    // 📈 Update graph
-    setGraphData((prev) => [
-      ...prev,
-      {
-        time: new Date().toLocaleTimeString(),
-        value: stressValue,
-      },
+    setGraphData((g) => [
+      ...g,
+      { time: new Date().toLocaleTimeString(), value },
     ]);
 
-    // 🔥 Save to Firestore
     await addDoc(collection(db, "stressReports"), {
       uid: user.uid,
-      email: user.email,
-      sleep: s,
-      workload: w,
-      mood: m,
       stress,
-      level: stressLevel,
+      level: lvl,
       createdAt: new Date(),
     });
+
+    await updateStreak();
   };
 
-  // 📊 Chart config
+  // 📊 Chart
   const chartData = {
     labels: graphData.map((d) => d.time),
     datasets: [
       {
-        label: "Stress Level Trend",
+        label: "Stress Trend",
         data: graphData.map((d) => d.value),
         borderColor: "#00ffcc",
-        backgroundColor: "rgba(0,255,204,0.25)",
         tension: 0.4,
-        fill: true,
       },
     ],
   };
 
-  const chartOptions = {
-    responsive: true,
-    scales: {
-      y: {
-        min: 0,
-        max: 10,
-        title: {
-          display: true,
-          text: "Stress Index",
-        },
-      },
-      x: {
-        title: {
-          display: true,
-          text: "Time",
-        },
-      },
-    },
-  };
-
-  // 🔐 AUTH UI
   if (!user) {
     return (
       <div className="app">
         <div className="card">
           <h1>🧠 MindGuard AI</h1>
-          <p className="subtitle">
-            {isRegister ? "Create Account" : "Login"}
-          </p>
-
+          <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
           <input
-            type="email"
-            placeholder="📧 Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          <input
+            placeholder="Password"
             type="password"
-            placeholder="🔒 Password"
-            value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-
           {isRegister && (
             <input
+              placeholder="Confirm Password"
               type="password"
-              placeholder="🔁 Confirm Password"
-              value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
           )}
-
-          <button onClick={handleAuth} disabled={loading}>
-            {loading ? "Please wait..." : isRegister ? "Register" : "Login"}
+          <button onClick={handleAuth}>
+            {isRegister ? "Register" : "Login"}
           </button>
-
-          {authError && <p className="error">{authError}</p>}
-
-          <p className="toggle" onClick={() => setIsRegister(!isRegister)}>
-            {isRegister
-              ? "Already have an account? Login"
-              : "New user? Register"}
+          <p onClick={() => setIsRegister(!isRegister)} className="toggle">
+            {isRegister ? "Login instead" : "Create account"}
           </p>
+          {authError && <p className="error">{authError}</p>}
         </div>
       </div>
     );
   }
 
-  // 🧠 MAIN APP UI
-  return (
-    <div className="app">
-      <div className="card">
+ return (
+  <div className="app">
+    <div className="card">
+      <div className="header">
         <h1>🧠 MindGuard AI</h1>
-        <p className="subtitle">Daily Student Stress Check-In</p>
-
-        <p className="user-email">👤 {user.email}</p>
-
-        <input
-          type="number"
-          placeholder="😴 Sleep Hours"
-          value={sleep}
-          onChange={(e) => setSleep(e.target.value)}
-        />
-
-        <input
-          type="number"
-          placeholder="📚 Workload (1-10)"
-          value={workload}
-          onChange={(e) => setWorkload(e.target.value)}
-        />
-
-        <input
-          type="number"
-          placeholder="😊 Mood (1-10)"
-          value={mood}
-          onChange={(e) => setMood(e.target.value)}
-        />
-
-        <button onClick={analyzeStress}>Analyze Stress</button>
-
-        {result && <div className={`result ${level}`}>{result}</div>}
-
-        {/* 📈 Trading-style graph */}
-        {graphData.length > 0 && (
-          <div style={{ marginTop: "30px" }}>
-            <Line data={chartData} options={chartOptions} />
-          </div>
-        )}
-
-        <button
-          className="logout"
-          onClick={() => signOut(auth)}
-          style={{ marginTop: "20px" }}
-        >
-          Logout
-        </button>
+        <div className="streak-badge">🔥 {streak}</div>
       </div>
+
+      <input
+        type="number"
+        placeholder="Sleep Hours"
+        onChange={(e) => setSleep(e.target.value)}
+      />
+      <input
+        type="number"
+        placeholder="Workload (1–10)"
+        onChange={(e) => setWorkload(e.target.value)}
+      />
+      <input
+        type="number"
+        placeholder="Mood (1–10)"
+        onChange={(e) => setMood(e.target.value)}
+      />
+
+      <button onClick={analyzeStress}>Analyze Stress</button>
+
+      {result && <div className={`result ${level}`}>{result}</div>}
+
+      {aiAdvice && (
+        <div className="ai-advice">
+          <h3>🤖 AI Guidance</h3>
+          <pre>{aiAdvice}</pre>
+        </div>
+      )}
+
+      {showAlert && (
+        <div className="alert">
+          🚨 If you feel overwhelmed or unsafe, please seek professional help
+          immediately.
+        </div>
+      )}
+
+      <Line data={chartData} />
+
+      <button className="logout" onClick={() => signOut(auth)}>
+        Logout
+      </button>
+
+      <p className="doctor">
+        🩺 Need help? Search for <b>“mental health professional near me”</b> or
+        contact local helpline.
+      </p>
+
+      <p className="disclaimer">
+        ⚠️ Informational only. Not a medical diagnosis.
+      </p>
     </div>
-  );
+
+    {/* 🤖 Floating AI Bot Button (CORRECT PLACE) */}
+    <div className="ai-bot">
+      🤖
+    </div>
+  </div>
+);
+  
 }
 
 export default App;
