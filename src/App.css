@@ -1,103 +1,174 @@
-/* Background */
+/* 🌈 Global */
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  min-height: 100vh;
+}
+
+/* 🧠 App Wrapper */
 .app {
-  height: 100vh;
-  background: linear-gradient(135deg, #7f7fd5, #86a8e7, #91eae4);
+  min-height: 100vh;
   display: flex;
-  align-items: center;
   justify-content: center;
-  font-family: "Segoe UI", sans-serif;
+  align-items: center;
+  padding: 20px;
 }
 
-/* Card */
+/* 📦 Card */
 .card {
-  background: #ffffff;
-  width: 360px;
-  padding: 30px;
-  border-radius: 18px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  background: #111827;
+  color: #e5e7eb;
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+/* 🏷 Titles */
+h1 {
   text-align: center;
-  animation: float 3s ease-in-out infinite;
-}
-
-/* Floating animation */
-@keyframes float {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-  100% { transform: translateY(0); }
-}
-
-/* Headings */
-.card h1 {
   margin-bottom: 5px;
+  font-size: 26px;
 }
 
 .subtitle {
-  color: #666;
+  text-align: center;
+  font-size: 14px;
+  color: #9ca3af;
   margin-bottom: 20px;
 }
 
-/* Inputs */
-.card input {
-  width: 100%;
-  padding: 12px;
+.user-email {
+  font-size: 13px;
+  text-align: center;
+  color: #93c5fd;
   margin-bottom: 15px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  font-size: 15px;
 }
 
-/* Button */
-.card button {
+/* ✏ Inputs */
+input {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  border: none;
+  background: #1f2933;
+  color: #f9fafb;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s ease;
+}
+
+input:focus {
+  background: #111827;
+  box-shadow: 0 0 0 2px #00ffcc;
+}
+
+/* 🔘 Buttons */
+button {
   width: 100%;
   padding: 12px;
+  background: linear-gradient(135deg, #00ffcc, #00bfa6);
   border: none;
-  border-radius: 25px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.card button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.25);
-}
-
-/* Result box */
-.result {
-  margin-top: 20px;
-  padding: 12px;
   border-radius: 12px;
-  font-size: 18px;
-  font-weight: bold;
-  animation: pop 0.4s ease-in-out;
+  font-size: 15px;
+  font-weight: 600;
+  color: #003333;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Result animation */
-@keyframes pop {
-  0% { transform: scale(0.7); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(0, 255, 204, 0.3);
 }
 
-/* Stress states */
-.high {
-  background: #ffe5e5;
-  color: #d63031;
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.medium {
-  background: #fff3cd;
-  color: #e17055;
+/* 🔁 Toggle text */
+.toggle {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 13px;
+  color: #60a5fa;
+  cursor: pointer;
 }
 
-.low {
-  background: #e6fffa;
-  color: #00b894;
+.toggle:hover {
+  text-decoration: underline;
 }
+
+/* ⚠ Errors */
 .error {
-  color: red;
-  font-size: 14px;
+  color: #f87171;
+  font-size: 13px;
+  text-align: center;
   margin-top: 10px;
 }
 
+/* 📊 Result Box */
+.result {
+  margin-top: 18px;
+  padding: 12px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* 🎯 Stress Levels */
+.result.low {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.result.medium {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.result.high {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+/* 🚪 Logout */
+.logout {
+  margin-top: 22px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+}
+
+.logout:hover {
+  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
+}
+
+/* 📱 Mobile */
+@media (max-width: 480px) {
+  .card {
+    padding: 22px;
+  }
+}
+.result {
+  animation: pop 0.3s ease;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
