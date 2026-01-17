@@ -205,26 +205,105 @@ button:disabled {
   }
 }
 
-/* 🤖 Floating AI Bot */
+/* 🤖 Floating AI Bot (fixed bottom-right, outside card) */
 .ai-bot {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 24px;
+  right: 24px;
+
   width: 56px;
   height: 56px;
   background: linear-gradient(135deg, #00ffcc, #00bfa6);
   border-radius: 50%;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   font-size: 26px;
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(0, 255, 204, 0.4);
-  z-index: 999;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  box-shadow: 0 10px 30px rgba(0, 255, 204, 0.45);
+  z-index: 9999; /* ⬅ always above everything */
 }
 
+/* Hover effect */
 .ai-bot:hover {
   transform: scale(1.1);
-  box-shadow: 0 14px 40px rgba(0, 255, 204, 0.6);
+}
+
+/* Right-side stats container */
+.right-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+/* Reward badge */
+.reward-badge {
+  background: rgba(255, 215, 0, 0.15);
+  color: #ffd700;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 999px;
+  margin-left: 90px;
+  margin-top: 10px;
+  box-shadow: 0 4px 14px rgba(255, 215, 0, 0.25);
+}
+/* Two-column layout */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 20px;
+}
+
+/* Left content */
+.main-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Right side panel */
+.side-panel {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+/* Stack streak + rewards */
+.right-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+/* Reward buttons spacing */
+.reward-store button {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* Mobile fallback */
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .side-panel {
+    margin-top: 20px;
+  }
+
+  .right-stats {
+    align-items: center;
+  }
+}
+.card {
+  position: relative;
+}
+.side-panel {
+  padding-bottom: 80px; /* prevents visual crowding */
 }
